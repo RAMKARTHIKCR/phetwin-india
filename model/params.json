@@ -1,0 +1,48 @@
+
+{
+  "_note": "ILLUSTRATIVE DEMO VALUES ONLY. These values are not clinically validated. Replace each placeholder with a cited source before the final demonstration.",
+  "body_weight_kg": {
+    "value": 60,
+    "citation": "Illustrative demo assumption; replace with user input or a documented scenario"
+  },
+  "vd_l_per_kg": {
+    "value": 0.6,
+    "citation": "TO_FILL: literature source for phenylalanine distribution volume"
+  },
+  "km_mg_per_l": {
+    "value": 15.0,
+    "citation": "TO_FILL: PAH/phenylalanine kinetic source; verify assay conditions"
+  },
+  "fasting_c0_mg_per_l": {
+    "value": 10.0,
+    "citation": "TO_FILL: source for illustrative healthy fasting Phe concentration"
+  },
+  "endogenous_input_mg_per_h": {
+    "value": 100.0,
+    "citation": "TO_FILL: literature source or documented calibration method"
+  },
+  "k_alt_l_per_h": {
+    "value": 0.5,
+    "citation": "TO_FILL: explicitly assumed minor clearance; justify and test sensitivity"
+  },
+  "ka_per_h": {
+    "value": 1.0,
+    "citation": "TO_FILL: source for absorption-rate assumption"
+  },
+  "bioavailability": {
+    "value": 0.9,
+    "citation": "TO_FILL: source for bioavailable fraction assumption"
+  },
+  "phe_mg_per_g_protein": {
+    "value": 50.0,
+    "citation": "Illustrative fallback assumption only; flag estimates using this ratio"
+  },
+  "target_low_umol_l": {
+    "value": 120,
+    "citation": "TO_FILL: selected clinical guideline and applicable population"
+  },
+  "target_high_umol_l": {
+    "value": 360,
+    "citation": "TO_FILL: selected clinical guideline and applicable population"
+  }
+}
