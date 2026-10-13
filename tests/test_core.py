@@ -11,6 +11,8 @@ from model.model import (
     simulate,
 )
 
+from model.sensitivity import run_sensitivity
+
 
 def test_parameter_file_loads():
     params = load_params()
@@ -70,3 +72,14 @@ def test_mass_balance_with_meals():
 def test_invalid_activity_is_rejected():
     with pytest.raises(ValueError):
         simulate([], activity_pct=150)
+
+
+
+def test_sensitivity_analysis_returns_finite_results():
+    baseline, results = run_sensitivity()
+
+    assert np.isfinite(baseline)
+    assert len(results) == 6
+    assert results["peak_swing_umol_l"].notna().all()
+    assert np.isfinite(results["peak_swing_umol_l"]).all()
+    assert (results["peak_swing_umol_l"] >= 0).all()
