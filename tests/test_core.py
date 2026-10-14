@@ -83,3 +83,54 @@ def test_sensitivity_analysis_returns_finite_results():
     assert results["peak_swing_umol_l"].notna().all()
     assert np.isfinite(results["peak_swing_umol_l"]).all()
     assert (results["peak_swing_umol_l"] >= 0).all()
+
+from database.planner import calculate_phe, calculate_meal_phe
+
+
+@pytest.fixture
+def sample_food():
+    return {
+        "name_en": "Test food",
+        "phe_mg_per_100g": 500.0,
+        "is_assumed": 0,
+        "source": "Test source",
+        "source_ref": "TEST001",
+    }
+
+
+def test_calculate_phe_for_100g(sample_food):
+    result = calculate_phe(sample_food, 100)
+
+    assert result["phe_mg"] == pytest.approx(500.0)
+    assert result["food_name"] == "Test food"
+
+
+def test_calculate_phe_for_50g(sample_food):
+    result = calculate_phe(sample_food, 50)
+
+    assert result["phe_mg"] == pytest.approx(250.0)
+
+
+def test_calculate_phe_rejects_negative_portion(sample_food):
+    with pytest.raises(ValueError):
+        calculate_phe(sample_food, -10)
+
+
+def test_calculate_meal_phe(sample_food):
+    result = calculate_meal_phe([
+        {"food": sample_food, "portion_grams": 50},
+        {"food": sample_food, "portion_grams": 100},
+    ])
+
+    assert result["total_phe_mg"] == pytest.approx(750.0)
+    assert result["contains_assumptions"] is False
+
+
+def test_meal_flags_assumed_food(sample_food):
+    sample_food["is_assumed"] = 1
+
+    result = calculate_meal_phe([
+        {"food": sample_food, "portion_grams": 100},
+    ])
+
+    assert result["contains_assumptions"] is True
