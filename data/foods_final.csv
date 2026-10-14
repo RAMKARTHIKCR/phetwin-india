@@ -1,0 +1,50 @@
+﻿name_en,name_ta,category,state,protein_g_per_100g,phe_mg_per_100g,is_assumed,source,source_ref,measure_label,measure_grams
+Black amaranth seed,,cereals_and_millets,raw,14.59,580.68,0,IFCT 2017,Table 1 A001 + Table 8 A001,100 g,100
+"Amaranth seed, pale brown",,cereals_and_millets,raw,13.27,630.33,0,IFCT 2017,Table 1 A002 + Table 8 A002,100 g,100
+Bajra (pearl millet),,cereals_and_millets,raw,10.96,528.27,0,IFCT 2017,Table 1 A003 + Table 8 A003,100 g,100
+Barley,,cereals_and_millets,raw,10.94,533.87,0,IFCT 2017,Table 1 A004 + Table 8 A004,100 g,100
+Jowar (sorghum),,cereals_and_millets,raw,9.97,508.47,0,IFCT 2017,Table 1 A005 + Table 8 A005,100 g,100
+"Maize, dry",,cereals_and_millets,raw,8.8,452.32,0,IFCT 2017,Table 1 A006 + Table 8 A006,100 g,100
+"Maize, tender, local",,cereals_and_millets,raw,3.57,141.02,0,IFCT 2017,Table 1 A007 + Table 8 A007,100 g,100
+"Maize, tender, sweet",,cereals_and_millets,raw,4.16,126.88,0,IFCT 2017,Table 1 A008 + Table 8 A008,100 g,100
+Quinoa,,cereals_and_millets,raw,13.11,570.29,0,IFCT 2017,Table 1 A009 + Table 8 A009,100 g,100
+Ragi (finger millet),,cereals_and_millets,raw,7.16,408.12,0,IFCT 2017,Table 1 A010 + Table 8 A010,100 g,100
+Rice flakes,,cereals_and_millets,raw,7.44,388.37,0,IFCT 2017,Table 1 A011 + Table 8 A011,100 g,100
+Rice puffed,,cereals_and_millets,raw,7.47,398.15,0,IFCT 2017,Table 1 A012 + Table 8 A012,100 g,100
+"Rice, raw, brown",,cereals_and_millets,raw,9.16,503.8,0,IFCT 2017,Table 1 A013 + Table 8 A013,100 g,100
+"Rice, parboiled, milled",,cereals_and_millets,parboiled,7.81,401.43,0,IFCT 2017,Table 1 A014 + Table 8 A014,100 g,100
+"Rice, raw, milled",,cereals_and_millets,raw,7.94,425.58,0,IFCT 2017,Table 1 A015 + Table 8 A015,100 g,100
+Samai (little millet),,cereals_and_millets,raw,10.13,622.0,0,IFCT 2017,Table 1 A016 + Table 8 A016,100 g,100
+Varagu (kodo millet),,cereals_and_millets,raw,8.92,559.28,0,IFCT 2017,Table 1 A017 + Table 8 A017,100 g,100
+"Wheat flour, refined",,cereals_and_millets,raw,10.36,444.44,0,IFCT 2017,Table 1 A018 + Table 8 A018,100 g,100
+"Wheat flour, atta",,cereals_and_millets,raw,10.57,531.67,0,IFCT 2017,Table 1 A019 + Table 8 A019,100 g,100
+"Wheat, whole",,cereals_and_millets,raw,10.59,503.03,0,IFCT 2017,Table 1 A020 + Table 8 A020,100 g,100
+"Wheat, bulgur",,cereals_and_millets,raw,10.84,483.46,0,IFCT 2017,Table 1 A021 + Table 8 A021,100 g,100
+"Wheat, semolina",,cereals_and_millets,raw,11.38,542.83,0,IFCT 2017,Table 1 A022 + Table 8 A022,100 g,100
+"Wheat, vermicelli",,cereals_and_millets,raw,9.7,475.3,0,IFCT 2017,Table 1 A023 + Table 8 A023,100 g,100
+"Wheat, vermicelli, roasted",,cereals_and_millets,roasted,10.37,514.35,0,IFCT 2017,Table 1 A024 + Table 8 A024,100 g,100
+"Bengal gram, dal",,grain_legumes,raw,21.55,1286.54,0,IFCT 2017,Table 1 B001 + Table 8 B001,100 g,100
+"Bengal gram, whole",,grain_legumes,raw,18.77,1174.00,0,IFCT 2017,Table 1 B002 + Table 8 B002,100 g,100
+"Black gram, dal",,grain_legumes,raw,23.06,1309.81,0,IFCT 2017,Table 1 B003 + Table 8 B003,100 g,100
+"Black gram, whole",,grain_legumes,raw,21.97,1296.23,0,IFCT 2017,Table 1 B004 + Table 8 B004,100 g,100
+"Cowpea, brown",,grain_legumes,raw,20.36,1113.69,0,IFCT 2017,Table 1 B005 + Table 8 B005,100 g,100
+"Cowpea, white",,grain_legumes,raw,21.25,1196.38,0,IFCT 2017,Table 1 B006 + Table 8 B006,100 g,100
+"Field bean, black",,grain_legumes,raw,19.93,1171.88,0,IFCT 2017,Table 1 B007 + Table 8 B007,100 g,100
+"Field bean, brown",,grain_legumes,raw,19.90,1138.28,0,IFCT 2017,Table 1 B008 + Table 8 B008,100 g,100
+"Field bean, white",,grain_legumes,raw,19.84,1142.78,0,IFCT 2017,Table 1 B009 + Table 8 B009,100 g,100
+"Green gram, dal",,grain_legumes,raw,23.88,1480.56,0,IFCT 2017,Table 1 B010 + Table 8 B010,100 g,100
+"Green gram, whole",,grain_legumes,raw,22.53,1399.11,0,IFCT 2017,Table 1 B011 + Table 8 B011,100 g,100
+"Horse gram, whole",,grain_legumes,raw,21.73,1755.78,0,IFCT 2017,Table 1 B012 + Table 8 B012,100 g,100
+"Lentil dal",,grain_legumes,raw,24.35,1241.85,0,IFCT 2017,Table 1 B013 + Table 8 B013,100 g,100
+"Lentil whole, brown",,grain_legumes,raw,22.49,1037.79,0,IFCT 2017,Table 1 B014 + Table 8 B014,100 g,100
+"Lentil whole, yellowish",,grain_legumes,raw,22.87,1067.03,0,IFCT 2017,Table 1 B015 + Table 8 B015,100 g,100
+"Peas, dry",,grain_legumes,raw,20.43,972.47,0,IFCT 2017,Table 1 B017 + Table 8 B017,100 g,100
+"Red gram, dal",,grain_legumes,raw,21.70,1900.92,0,IFCT 2017,Table 1 B021 + Table 8 B021,100 g,100
+Moth bean,,grain_legumes,raw,19.75,1155.38,0,IFCT 2017,Table 1 B016 + Table 8 B016,100 g,100
+"Rajmah, black",,grain_legumes,raw,19.01,1011.33,0,IFCT 2017,Table 1 B018 + Table 8 B018,100 g,100
+"Rajmah, brown",,grain_legumes,raw,19.50,1152.45,0,IFCT 2017,Table 1 B019 + Table 8 B019,100 g,100
+"Rajmah, red",,grain_legumes,raw,19.91,1174.69,0,IFCT 2017,Table 1 B020 + Table 8 B020,100 g,100
+"Red gram, whole",,grain_legumes,raw,20.47,1782.94,0,IFCT 2017,Table 1 B022 + Table 8 B022,100 g,100
+Ricebean,,grain_legumes,raw,19.97,1509.73,0,IFCT 2017,Table 1 B023 + Table 8 B023,100 g,100
+"Soybean, brown",,grain_legumes,raw,35.58,1682.93,0,IFCT 2017,Table 1 B024 + Table 8 B024,100 g,100
+"Soybean, white",,grain_legumes,raw,37.80,1893.78,0,IFCT 2017,Table 1 B025 + Table 8 B025,100 g,100
