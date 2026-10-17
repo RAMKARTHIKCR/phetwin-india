@@ -343,3 +343,182 @@ st.caption(
     "PheTwin India | Student capstone prototype | "
     "Not intended for diagnosis, treatment, or dietary decisions."
 )
+
+
+# ---------------------------------------------------------
+# Blood Phe simulation — educational prototype only
+# ---------------------------------------------------------
+
+st.divider()
+st.header("3. Blood Phenylalanine Simulation")
+
+st.warning(
+    "**Illustrative simulation only.** This model is not clinically validated "
+    "and must not be used to predict an individual's actual blood Phe, "
+    "adjust treatment, or make dietary decisions. The default parameters "
+    "are illustrative and require appropriate sourcing and validation."
+)
+
+from model.model import simulate, load_params
+import plotly.express as px
+
+st.write(
+    "Explore how the current mathematical model responds to illustrative "
+    "meal inputs and residual PAH activity. These inputs are not "
+    "recommended meal quantities or treatment settings."
+)
+
+with st.expander("Model assumptions and limitations", expanded=True):
+    st.markdown(
+        """
+        - The model uses a simplified one-compartment representation.
+        - Meal Phe values are model inputs, not measurements of absorbed Phe.
+        - Residual PAH activity is an illustrative model control.
+        - The output is not validated against patient data.
+        - A simulated concentration must not be interpreted as an individual's
+          measured blood Phe or a clinical target.
+        """
+    )
+
+try:
+    model_params = load_params()
+except Exception as exc:
+    st.error(f"Could not load simulation parameters: {exc}")
+    st.stop()
+
+with st.form("simulation_form"):
+    st.subheader("Simulation settings")
+
+    sim_duration = st.slider(
+        "Simulation duration (hours)",
+        min_value=6,
+        max_value=48,
+        value=24,
+        step=6,
+    )
+
+    sim_dt = st.select_slider(
+        "Output time step (hours)",
+        options=[0.25, 0.5, 1.0],
+        value=0.25,
+    )
+
+    activity_pct = st.slider(
+        "Illustrative residual PAH activity (%)",
+        min_value=0,
+        max_value=100,
+        value=50,
+        step=5,
+        help="Exploratory model input only; not an individual's measured activity.",
+    )
+
+    st.subheader("Illustrative meal inputs")
+
+    meal1_col, meal2_col = st.columns(2)
+
+    with meal1_col:
+        meal1_time = st.number_input(
+            "Meal 1 time (hours from simulation start)",
+            min_value=0.0,
+            max_value=48.0,
+            value=8.0,
+            step=0.5,
+        )
+        meal1_phe = st.number_input(
+            "Meal 1 Phe input (mg)",
+            min_value=0.0,
+            max_value=10000.0,
+            value=400.0,
+            step=50.0,
+        )
+
+    with meal2_col:
+        meal2_time = st.number_input(
+            "Meal 2 time (hours from simulation start)",
+            min_value=0.0,
+            max_value=48.0,
+            value=13.0,
+            step=0.5,
+        )
+        meal2_phe = st.number_input(
+            "Meal 2 Phe input (mg)",
+            min_value=0.0,
+            max_value=10000.0,
+            value=600.0,
+            step=50.0,
+        )
+
+    run_simulation = st.form_submit_button("Run illustrative simulation")
+
+if run_simulation:
+    if meal1_time > sim_duration or meal2_time > sim_duration:
+        st.error("Both meal times must fall within the simulation duration.")
+    else:
+        try:
+            meals = [
+                (float(meal1_time), float(meal1_phe)),
+                (float(meal2_time), float(meal2_phe)),
+            ]
+
+            simulation = simulate(
+                meals=meals,
+                activity_pct=int(activity_pct),
+                p=model_params,
+                t_end=float(sim_duration),
+                dt=float(sim_dt),
+            )
+
+            st.subheader("Simulated concentration over time")
+
+            chart = px.line(
+                simulation,
+                x="t_h",
+                y="conc_umol_l",
+                labels={
+                    "t_h": "Time (hours)",
+                    "conc_umol_l": "Simulated concentration (µmol/L)",
+                },
+                title="Illustrative blood-Phe model output",
+            )
+
+            chart.update_layout(
+                xaxis_title="Time (hours)",
+                yaxis_title="Simulated concentration (µmol/L)",
+            )
+
+            st.plotly_chart(chart, use_container_width=True)
+
+            metric1, metric2, metric3 = st.columns(3)
+
+            metric1.metric(
+                "Initial concentration",
+                f"{simulation['conc_umol_l'].iloc[0]:.2f} µmol/L",
+            )
+
+            metric2.metric(
+                "Maximum simulated concentration",
+                f"{simulation['conc_umol_l'].max():.2f} µmol/L",
+            )
+
+            metric3.metric(
+                "Final simulated concentration",
+                f"{simulation['conc_umol_l'].iloc[-1]:.2f} µmol/L",
+            )
+
+            st.subheader("Simulation data")
+
+            st.dataframe(
+                simulation.round(3),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+            st.download_button(
+                "Download simulation results (CSV)",
+                data=simulation.to_csv(index=False).encode("utf-8"),
+                file_name="phetwin_illustrative_simulation.csv",
+                mime="text/csv",
+            )
+
+        except Exception as exc:
+            st.error(f"Simulation could not be completed: {exc}")
