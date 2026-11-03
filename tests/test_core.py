@@ -5,10 +5,13 @@ import numpy as np
 import pytest
 
 from model.model import (
+    activity_from_tolerance,
+    calibrate_vmax,
     load_params,
     mgl_to_mgdl,
     mgl_to_umol,
     simulate,
+    steady_state_conc,
 )
 
 from model.sensitivity import run_sensitivity
@@ -32,6 +35,37 @@ def test_no_meal_curve_stays_at_steady_state():
     concentrations = result["conc_mg_l"].to_numpy()
     assert np.all(np.isfinite(concentrations))
     assert np.allclose(concentrations, concentrations[0], rtol=1e-5, atol=1e-5)
+
+
+def test_calibration_matches_full_model_steady_state():
+    params = load_params()
+    vmax = calibrate_vmax(
+        params["endogenous_input_mg_per_h"],
+        params["fasting_c0_mg_per_l"],
+        params["km_mg_per_l"],
+        params["k_alt_l_per_h"],
+    )
+
+    assert steady_state_conc(vmax, params) == pytest.approx(
+        params["fasting_c0_mg_per_l"]
+    )
+
+
+def test_activity_from_tolerance_has_valid_range():
+    activity = activity_from_tolerance(0, 120)
+
+    assert 0 <= activity <= 100
+
+
+@pytest.mark.parametrize(
+    "tolerance, target",
+    [(-1, 120), (0, 0), (1500, 120)],
+)
+def test_activity_from_tolerance_rejects_invalid_or_unachievable_inputs(
+    tolerance, target
+):
+    with pytest.raises(ValueError):
+        activity_from_tolerance(tolerance, target)
 
 
 def test_meals_produce_finite_curve():

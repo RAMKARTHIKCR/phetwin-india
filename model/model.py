@@ -41,16 +41,28 @@ def mgl_to_mgdl(concentration_mg_l):
     return concentration_mg_l / 10.0
 
 
-def calibrate_vmax(endogenous_input, fasting_concentration, km):
-    """Calculate the reference maximum PAH elimination rate.
+def calibrate_vmax(
+    endogenous_input, fasting_concentration, km, k_alt_l_per_h=0.0
+):
+    """Calculate reference PAH capacity at the configured fasting state.
 
-    This follows the guide's simplified calibration equation and ignores
-    alternative clearance during calibration.
+    Calibration matches the full model's steady-state equation:
+    ``endogenous_input = Vmax*C/(Km+C) + k_alt*C``.
+    ``k_alt_l_per_h`` defaults to zero for compatibility with the simplified
+    equation, but callers using the full model must pass the configured value.
     """
     if endogenous_input <= 0 or fasting_concentration <= 0 or km <= 0:
         raise ValueError("Input, fasting concentration, and Km must be positive.")
+    if k_alt_l_per_h < 0:
+        raise ValueError("Alternative clearance must be non-negative.")
 
-    return endogenous_input * (km + fasting_concentration) / fasting_concentration
+    residual_input = endogenous_input - k_alt_l_per_h * fasting_concentration
+    if residual_input < 0:
+        raise ValueError(
+            "Alternative clearance exceeds endogenous input at the fasting target."
+        )
+
+    return residual_input * (km + fasting_concentration) / fasting_concentration
 
 
 def steady_state_conc(vmax_eff, params):
@@ -113,6 +125,7 @@ def simulate(meals, activity_pct, p=None, t_end=24.0, dt=0.05):
         p["endogenous_input_mg_per_h"],
         p["fasting_c0_mg_per_l"],
         p["km_mg_per_l"],
+        p["k_alt_l_per_h"],
     )
     vmax_eff = vmax_normal * activity_pct / 100.0
 
@@ -236,6 +249,13 @@ def activity_from_tolerance(tolerance_mg_per_day, c_target_umol, p=None):
         p["endogenous_input_mg_per_h"],
         p["fasting_c0_mg_per_l"],
         p["km_mg_per_l"],
+        p["k_alt_l_per_h"],
     )
 
-    return 100.0 * vmax_eff / vmax_normal
+    activity_pct = 100.0 * vmax_eff / vmax_normal
+    if not 0 <= activity_pct <= 100:
+        raise ValueError(
+            "Tolerance implies residual activity outside the model's 0–100% range."
+        )
+
+    return activity_pct
