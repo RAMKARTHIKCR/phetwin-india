@@ -21,3 +21,5 @@ clinical tool, and has not been clinically validated.
   from the demo.
 
 Run the tests with `python -m pytest -q` from the project root.
+
+For a browser-level check, follow [the manual smoke-test checklist](docs/manual_smoke_test.md).
