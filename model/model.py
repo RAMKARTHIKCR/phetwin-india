@@ -6,6 +6,7 @@ Model parameters are loaded from params.json.
 """
 
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +17,20 @@ from scipy.integrate import solve_ivp
 # Molecular weight used for unit conversion: phenylalanine, g/mol.
 # Keep the conversion consistent throughout the project.
 PHE_MW = 165.19
+
+REQUIRED_PARAMETERS = {
+    "body_weight_kg",
+    "vd_l_per_kg",
+    "km_mg_per_l",
+    "fasting_c0_mg_per_l",
+    "endogenous_input_mg_per_h",
+    "k_alt_l_per_h",
+    "ka_per_h",
+    "bioavailability",
+    "phe_mg_per_g_protein",
+    "target_low_umol_l",
+    "target_high_umol_l",
+}
 
 
 def load_params(path=None):
@@ -33,7 +48,64 @@ def load_parameter_metadata(path=None):
     if path is None:
         path = Path(__file__).parent / "params.json"
 
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    validate_parameter_metadata(raw)
+    return raw
+
+
+def validate_parameter_metadata(raw):
+    """Validate parameter structure and physically meaningful demo ranges."""
+    parameters = {key for key in raw if not key.startswith("_")}
+    missing = REQUIRED_PARAMETERS - parameters
+    if missing:
+        raise ValueError(
+            "Parameter file is missing required entries: "
+            + ", ".join(sorted(missing))
+        )
+
+    for key in parameters:
+        item = raw[key]
+        if not isinstance(item, dict):
+            raise ValueError(f"Parameter '{key}' must be an object.")
+
+        value = item.get("value")
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"Parameter '{key}' must have a numeric value.")
+        if not math.isfinite(value):
+            raise ValueError(f"Parameter '{key}' must be finite.")
+
+        citation = str(item.get("citation", "")).strip()
+        if not citation:
+            raise ValueError(f"Parameter '{key}' must have a citation field.")
+
+    positive = {
+        "body_weight_kg",
+        "vd_l_per_kg",
+        "km_mg_per_l",
+        "fasting_c0_mg_per_l",
+        "ka_per_h",
+    }
+    for key in positive:
+        if raw[key]["value"] <= 0:
+            raise ValueError(f"Parameter '{key}' must be positive.")
+
+    non_negative = {
+        "endogenous_input_mg_per_h",
+        "k_alt_l_per_h",
+        "phe_mg_per_g_protein",
+        "target_low_umol_l",
+        "target_high_umol_l",
+    }
+    for key in non_negative:
+        if raw[key]["value"] < 0:
+            raise ValueError(f"Parameter '{key}' must be non-negative.")
+
+    bioavailability = raw["bioavailability"]["value"]
+    if not 0 <= bioavailability <= 1:
+        raise ValueError("Parameter 'bioavailability' must be between 0 and 1.")
+
+    if raw["target_low_umol_l"]["value"] > raw["target_high_umol_l"]["value"]:
+        raise ValueError("Target low concentration cannot exceed target high concentration.")
 
 
 def unresolved_parameter_citations(path=None):

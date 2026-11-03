@@ -13,6 +13,7 @@ from model.model import (
     mgl_to_umol,
     simulate,
     steady_state_conc,
+    validate_parameter_metadata,
     unresolved_parameter_citations,
 )
 
@@ -45,6 +46,34 @@ def test_parameter_metadata_has_citations_and_flags_placeholders():
     ]
     assert "context" in metadata["target_low_umol_l"]
     assert "context" in metadata["target_high_umol_l"]
+
+
+def test_parameter_metadata_rejects_missing_required_entry():
+    metadata = load_parameter_metadata()
+    metadata.pop("ka_per_h")
+
+    with pytest.raises(ValueError, match="missing required entries"):
+        validate_parameter_metadata(metadata)
+
+
+@pytest.mark.parametrize(
+    "parameter, value",
+    [("bioavailability", 1.1), ("ka_per_h", 0), ("body_weight_kg", -1)],
+)
+def test_parameter_metadata_rejects_invalid_ranges(parameter, value):
+    metadata = load_parameter_metadata()
+    metadata[parameter]["value"] = value
+
+    with pytest.raises(ValueError):
+        validate_parameter_metadata(metadata)
+
+
+def test_parameter_metadata_rejects_empty_citation():
+    metadata = load_parameter_metadata()
+    metadata["km_mg_per_l"]["citation"] = ""
+
+    with pytest.raises(ValueError, match="citation field"):
+        validate_parameter_metadata(metadata)
 
 
 def test_concentration_unit_conversions():
