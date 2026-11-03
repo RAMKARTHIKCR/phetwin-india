@@ -8,10 +8,12 @@ from model.model import (
     activity_from_tolerance,
     calibrate_vmax,
     load_params,
+    load_parameter_metadata,
     mgl_to_mgdl,
     mgl_to_umol,
     simulate,
     steady_state_conc,
+    unresolved_parameter_citations,
 )
 
 from model.sensitivity import run_sensitivity
@@ -21,6 +23,26 @@ def test_parameter_file_loads():
     params = load_params()
     assert params["body_weight_kg"] > 0
     assert params["vd_l_per_kg"] > 0
+
+
+def test_parameter_metadata_has_citations_and_flags_placeholders():
+    metadata = load_parameter_metadata()
+    parameters = {
+        key: item for key, item in metadata.items() if not key.startswith("_")
+    }
+
+    assert all(str(item.get("citation", "")).strip() for item in parameters.values())
+    assert unresolved_parameter_citations() == [
+        "vd_l_per_kg",
+        "km_mg_per_l",
+        "fasting_c0_mg_per_l",
+        "endogenous_input_mg_per_h",
+        "k_alt_l_per_h",
+        "ka_per_h",
+        "bioavailability",
+        "target_low_umol_l",
+        "target_high_umol_l",
+    ]
 
 
 def test_concentration_unit_conversions():

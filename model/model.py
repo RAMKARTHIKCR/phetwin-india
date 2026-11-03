@@ -20,15 +20,35 @@ PHE_MW = 165.19
 
 def load_params(path=None):
     """Load model parameter values from params.json."""
-    if path is None:
-        path = Path(__file__).parent / "params.json"
-
-    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    raw = load_parameter_metadata(path)
     return {
         key: item["value"]
         for key, item in raw.items()
         if not key.startswith("_")
     }
+
+
+def load_parameter_metadata(path=None):
+    """Load parameter values together with their provenance metadata."""
+    if path is None:
+        path = Path(__file__).parent / "params.json"
+
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def unresolved_parameter_citations(path=None):
+    """Return non-private parameters with missing or placeholder citations."""
+    raw = load_parameter_metadata(path)
+    unresolved = []
+
+    for key, item in raw.items():
+        if key.startswith("_"):
+            continue
+        citation = str(item.get("citation", "")).strip()
+        if not citation or "TO_FILL" in citation.upper():
+            unresolved.append(key)
+
+    return unresolved
 
 
 def mgl_to_umol(concentration_mg_l):

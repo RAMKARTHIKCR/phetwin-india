@@ -359,7 +359,7 @@ st.warning(
     "are illustrative and require appropriate sourcing and validation."
 )
 
-from model.model import simulate, load_params
+from model.model import load_params, simulate, unresolved_parameter_citations
 import plotly.express as px
 
 st.write(
@@ -385,6 +385,13 @@ try:
 except Exception as exc:
     st.error(f"Could not load simulation parameters: {exc}")
     st.stop()
+
+unresolved_citations = unresolved_parameter_citations()
+if unresolved_citations:
+    st.warning(
+        "The simulation still uses illustrative parameters without resolved "
+        "citations: " + ", ".join(unresolved_citations) + "."
+    )
 
 with st.form("simulation_form"):
     st.subheader("Simulation settings")
