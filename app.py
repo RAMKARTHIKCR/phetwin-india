@@ -359,7 +359,12 @@ st.warning(
     "are illustrative and require appropriate sourcing and validation."
 )
 
-from model.model import load_params, simulate, unresolved_parameter_citations
+from model.model import (
+    load_params,
+    simulate,
+    target_range_metadata,
+    unresolved_parameter_citations,
+)
 import plotly.express as px
 
 st.write(
@@ -396,6 +401,16 @@ st.info(
     "The target-range parameters are context-dependent metadata only; they "
     "are not used to set or interpret the current simulation output."
 )
+target_metadata = target_range_metadata()
+with st.expander("Target-range metadata"):
+    st.write(
+        f"Illustrative lower value: **{target_metadata['low']['value']} µmol/L**"
+    )
+    st.caption(target_metadata["low"]["context"])
+    st.write(
+        f"Illustrative upper value: **{target_metadata['high']['value']} µmol/L**"
+    )
+    st.caption(target_metadata["high"]["context"])
 
 with st.form("simulation_form"):
     st.subheader("Simulation settings")

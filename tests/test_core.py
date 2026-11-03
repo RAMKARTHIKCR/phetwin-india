@@ -13,6 +13,7 @@ from model.model import (
     mgl_to_umol,
     simulate,
     steady_state_conc,
+    target_range_metadata,
     validate_parameter_metadata,
     unresolved_parameter_citations,
 )
@@ -74,6 +75,15 @@ def test_parameter_metadata_rejects_empty_citation():
 
     with pytest.raises(ValueError, match="citation field"):
         validate_parameter_metadata(metadata)
+
+
+def test_target_range_metadata_preserves_context_notes():
+    target = target_range_metadata()
+
+    assert target["low"]["value"] == 120
+    assert target["high"]["value"] == 360
+    assert "age" in target["low"]["context"]
+    assert "pregnancy" in target["high"]["context"]
 
 
 def test_concentration_unit_conversions():

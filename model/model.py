@@ -123,6 +123,21 @@ def unresolved_parameter_citations(path=None):
     return unresolved
 
 
+def target_range_metadata(path=None):
+    """Return target-range values and context notes for transparent display."""
+    raw = load_parameter_metadata(path)
+    return {
+        "low": {
+            "value": raw["target_low_umol_l"]["value"],
+            "context": raw["target_low_umol_l"].get("context", ""),
+        },
+        "high": {
+            "value": raw["target_high_umol_l"]["value"],
+            "context": raw["target_high_umol_l"].get("context", ""),
+        },
+    }
+
+
 def mgl_to_umol(concentration_mg_l):
     """Convert concentration from mg/L to micromol/L."""
     return concentration_mg_l / PHE_MW * 1000.0
