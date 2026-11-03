@@ -16,6 +16,8 @@ clinical tool, and has not been clinically validated.
   tolerance estimate and target concentration as model inputs and rejects
   inferred activities outside 0–100%; it does not establish a patient's
   phenotype, dietary prescription, or treatment target.
+- Target-range metadata include context notes, but the current simulation does
+  not use those values to interpret or recommend a concentration range.
 - Food values and meal inputs remain illustrative where the database identifies
   assumptions. No parameter source or clinical conclusion should be inferred
   from the demo.

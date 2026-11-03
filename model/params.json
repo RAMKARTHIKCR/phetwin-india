@@ -39,10 +39,12 @@
   },
   "target_low_umol_l": {
     "value": 120,
+    "context": "Illustrative lower target; applicability varies by age and pregnancy status",
     "citation": "TO_FILL: selected clinical guideline and applicable population"
   },
   "target_high_umol_l": {
     "value": 360,
+    "context": "Illustrative upper target; applicability varies by age and pregnancy status",
     "citation": "TO_FILL: selected clinical guideline and applicable population"
   }
 }

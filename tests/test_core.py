@@ -43,6 +43,8 @@ def test_parameter_metadata_has_citations_and_flags_placeholders():
         "target_low_umol_l",
         "target_high_umol_l",
     ]
+    assert "context" in metadata["target_low_umol_l"]
+    assert "context" in metadata["target_high_umol_l"]
 
 
 def test_concentration_unit_conversions():

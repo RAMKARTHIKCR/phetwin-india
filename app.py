@@ -392,6 +392,10 @@ if unresolved_citations:
         "The simulation still uses illustrative parameters without resolved "
         "citations: " + ", ".join(unresolved_citations) + "."
     )
+st.info(
+    "The target-range parameters are context-dependent metadata only; they "
+    "are not used to set or interpret the current simulation output."
+)
 
 with st.form("simulation_form"):
     st.subheader("Simulation settings")
