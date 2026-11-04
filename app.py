@@ -52,7 +52,17 @@ if foods.empty:
 
 # Make missing Tamil names safe to search.
 foods["name_ta"] = foods["name_ta"].fillna("")
+def food_label(food):
+    tamil = str(food.get("name_ta", "")).strip()
+    if tamil:
+        return f"{food['name_en']} — {tamil}"
+    return food["name_en"]
 
+
+food_labels = {
+    row["name_en"]: food_label(row)
+    for _, row in foods.iterrows()
+}
 # ---------------------------------------------------------
 # Original single-food calculator
 # ---------------------------------------------------------
@@ -81,10 +91,11 @@ if single_filtered.empty:
     st.info("No matching foods found. Try another search term.")
 else:
     single_name = st.selectbox(
-        "Select a food",
-        single_filtered["name_en"].tolist(),
-        key="single_food_select",
-    )
+    "Select a food",
+    single_filtered["name_en"].tolist(),
+    format_func=lambda name: food_labels.get(name, name),
+    key="single_food_select",
+)
 
     single_food = single_filtered.loc[
         single_filtered["name_en"] == single_name
@@ -103,7 +114,16 @@ else:
         try:
             result = calculate_phe(single_food, single_portion)
 
-            st.subheader("Single-food result")
+            # Get the Tamil food name
+            food_name_ta = str(single_food.get("name_ta", "")).strip()
+            food_name_en = result.get("food_name", single_food["name_en"])
+
+            # Display bilingual food name
+            if food_name_ta:
+                st.subheader(f"Single-food result: {food_name_en} — {food_name_ta}")
+            else:
+                st.subheader(f"Single-food result: {food_name_en}")
+
             col1, col2 = st.columns(2)
             col1.metric("Portion size", f"{result['portion_grams']:.1f} g")
             col2.metric("Estimated Phe", f"{result['phe_mg']:.2f} mg")
@@ -127,7 +147,6 @@ else:
             st.error(f"Could not calculate the portion: {exc}")
 
 st.divider()
-
 # ---------------------------------------------------------
 # Session-based meal builder
 # ---------------------------------------------------------
@@ -191,17 +210,17 @@ meal_filtered = foods[meal_mask].reset_index(drop=True)
 if meal_filtered.empty:
     st.info("No matching foods found.")
 else:
-    selected_meal_food_name = st.selectbox(
-        "Food to add",
-        meal_filtered["name_en"].tolist(),
-        key="meal_food_select",
-    )
-
-    selected_meal_food = meal_filtered.loc[
+   selected_meal_food_name = st.selectbox(
+    "Food to add",
+    meal_filtered["name_en"].tolist(),
+    format_func=lambda name: food_labels.get(name, name),
+    key="meal_food_select",
+)
+selected_meal_food = meal_filtered.loc[
         meal_filtered["name_en"] == selected_meal_food_name
     ].iloc[0]
 
-    meal_portion = st.number_input(
+meal_portion = st.number_input(
         "Food portion (grams)",
         min_value=0.0,
         max_value=5000.0,
@@ -210,7 +229,7 @@ else:
         key="meal_food_portion",
     )
 
-    if st.button("Add food to meal", type="primary"):
+if st.button("Add food to meal", type="primary"):
         if meal_portion <= 0:
             st.error("Enter a portion greater than zero.")
         else:
@@ -220,6 +239,7 @@ else:
                     meal_portion,
                 )
 
+                result["food_name_ta"] = selected_meal_food["name_ta"]
                 st.session_state.meals[active_meal_name].append(result)
                 st.success(
                     f"Added {result['food_name']} to {active_meal_name}."
@@ -243,7 +263,11 @@ else:
         display_rows.append(
             {
                 "Item": index + 1,
-                "Food": item["food_name"],
+                "Food": (
+    f"{item['food_name']} — {item.get('food_name_ta', '')}"
+    if item.get("food_name_ta")
+    else item["food_name"]
+),
                 "Portion (g)": round(item["portion_grams"], 2),
                 "Estimated Phe (mg)": round(item["phe_mg"], 2),
                 "Assumed value": "Yes" if item["is_assumed"] == 1 else "No",
@@ -280,7 +304,8 @@ else:
     with st.expander("View meal sources"):
         for index, item in enumerate(meal_items, start=1):
             st.write(
-                f"{index}. **{item['food_name']}** — "
+                f"{index}. **{item['food_name']} — "
+f"{item.get('food_name_ta', '')}** — "
                 f"{item['source']} ({item['source_ref']})"
             )
 

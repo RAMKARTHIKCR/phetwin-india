@@ -1,50 +1,62 @@
 
+
 {
-  "_note": "ILLUSTRATIVE DEMO VALUES ONLY. These values are not clinically validated. Replace each placeholder with a cited source before the final demonstration.",
+  "_note": "PheTwin India educational simulation. Values are illustrative and are not clinically validated. This model is not intended for diagnosis or dietary treatment decisions.",
+
   "body_weight_kg": {
     "value": 60,
-    "citation": "Illustrative demo assumption; replace with user input or a documented scenario"
+    "citation": "Illustrative adult demo scenario. Can be changed for other simulation scenarios."
   },
+
   "vd_l_per_kg": {
     "value": 0.6,
-    "citation": "TO_FILL: literature source for phenylalanine distribution volume"
+    "citation": "Illustrative assumption. A published mechanistic PKU model used 0.5 L/kg. Distribution volume depends on the compartmental model and is not a universal physiological constant."
   },
+
   "km_mg_per_l": {
     "value": 15.0,
-    "citation": "TO_FILL: PAH/phenylalanine kinetic source; verify assay conditions"
+    "citation": "Illustrative model assumption. Published recombinant human PAH studies report different apparent Km values depending on experimental conditions and BH4 availability. See PMID: 8806757 and PMC: PMC15912. Not a clinically validated whole-body parameter."
   },
+
   "fasting_c0_mg_per_l": {
     "value": 10.0,
-    "citation": "TO_FILL: source for illustrative healthy fasting Phe concentration"
+    "citation": "Illustrative adult reference-state assumption, approximately 60.5 umol/L. Within the adult plasma Phe reference interval reported by Mayo Clinic Laboratories. Not a universal fasting value."
   },
+
   "endogenous_input_mg_per_h": {
     "value": 100.0,
-    "citation": "TO_FILL: literature source or documented calibration method"
+    "citation": "Illustrative constant model input. Human tracer studies report endogenous phenylalanine rate of appearance as an index of whole-body protein breakdown; these measurements are not directly equivalent to this model's net input parameter. See PMID: 9022533."
   },
+
   "k_alt_l_per_h": {
     "value": 0.5,
-    "citation": "TO_FILL: explicitly assumed minor clearance; justify and test sensitivity"
+    "citation": "Illustrative mathematical assumption representing additional linear Phe clearance outside the PAH-mediated pathway. Not established as a validated human clearance constant. Subject to sensitivity analysis."
   },
+
   "ka_per_h": {
     "value": 1.0,
-    "citation": "TO_FILL: source for absorption-rate assumption"
+    "citation": "Illustrative first-order gut absorption rate constant used in the simplified simulation. Not a measured universal human phenylalanine absorption rate. Subject to sensitivity analysis."
   },
+
   "bioavailability": {
     "value": 0.9,
-    "citation": "TO_FILL: source for bioavailable fraction assumption"
+    "citation": "Illustrative fixed bioavailability assumption for dietary Phe in the simplified gut absorption model. Not established as a universal absorption fraction across foods. Subject to sensitivity analysis."
   },
+
   "phe_mg_per_g_protein": {
     "value": 50.0,
-    "citation": "Illustrative fallback assumption only; flag estimates using this ratio"
+    "citation": "Illustrative fallback assumption only. Food-specific estimates should use documented food composition data wherever available."
   },
+
   "target_low_umol_l": {
     "value": 120,
-    "context": "Illustrative lower target; applicability varies by age and pregnancy status",
-    "citation": "TO_FILL: selected clinical guideline and applicable population"
+    "context": "Illustrative lower target only. Clinical applicability depends on age, pregnancy status and the selected guideline.",
+    "citation": "TO_FILL: verify against a selected PKU clinical guideline and specify the applicable population before clinical interpretation."
   },
+
   "target_high_umol_l": {
     "value": 360,
-    "context": "Illustrative upper target; applicability varies by age and pregnancy status",
-    "citation": "TO_FILL: selected clinical guideline and applicable population"
+    "context": "Illustrative upper target only. Clinical applicability depends on age, pregnancy status and the selected guideline.",
+    "citation": "TO_FILL: verify against a selected PKU clinical guideline and specify the applicable population before clinical interpretation."
   }
 }

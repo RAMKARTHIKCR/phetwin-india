@@ -19,6 +19,7 @@ from model.model import (
 )
 
 from model.sensitivity import run_sensitivity
+from database.planner import calculate_phe, calculate_meal_phe
 
 
 def test_parameter_file_loads():
@@ -29,22 +30,28 @@ def test_parameter_file_loads():
 
 def test_parameter_metadata_has_citations_and_flags_placeholders():
     metadata = load_parameter_metadata()
+
     parameters = {
         key: item for key, item in metadata.items() if not key.startswith("_")
     }
 
-    assert all(str(item.get("citation", "")).strip() for item in parameters.values())
+    for key, item in parameters.items():
+        assert "value" in item, f"Missing value for {key}"
+        assert isinstance(item["value"], (int, float))
+        assert "citation" in item
+        assert item["citation"].strip(), f"Missing citation for {key}"
+
+    assert all(
+        str(item.get("citation", "")).strip()
+        for item in parameters.values()
+    )
+
+    # Only the two clinical target references remain unresolved.
     assert unresolved_parameter_citations() == [
-        "vd_l_per_kg",
-        "km_mg_per_l",
-        "fasting_c0_mg_per_l",
-        "endogenous_input_mg_per_h",
-        "k_alt_l_per_h",
-        "ka_per_h",
-        "bioavailability",
         "target_low_umol_l",
         "target_high_umol_l",
     ]
+
     assert "context" in metadata["target_low_umol_l"]
     assert "context" in metadata["target_high_umol_l"]
 
@@ -59,7 +66,11 @@ def test_parameter_metadata_rejects_missing_required_entry():
 
 @pytest.mark.parametrize(
     "parameter, value",
-    [("bioavailability", 1.1), ("ka_per_h", 0), ("body_weight_kg", -1)],
+    [
+        ("bioavailability", 1.1),
+        ("ka_per_h", 0),
+        ("body_weight_kg", -1),
+    ],
 )
 def test_parameter_metadata_rejects_invalid_ranges(parameter, value):
     metadata = load_parameter_metadata()
@@ -96,12 +107,19 @@ def test_no_meal_curve_stays_at_steady_state():
     result = simulate([], activity_pct=100, t_end=6, dt=0.1)
 
     concentrations = result["conc_mg_l"].to_numpy()
+
     assert np.all(np.isfinite(concentrations))
-    assert np.allclose(concentrations, concentrations[0], rtol=1e-5, atol=1e-5)
+    assert np.allclose(
+        concentrations,
+        concentrations[0],
+        rtol=1e-5,
+        atol=1e-5,
+    )
 
 
 def test_calibration_matches_full_model_steady_state():
     params = load_params()
+
     vmax = calibrate_vmax(
         params["endogenous_input_mg_per_h"],
         params["fasting_c0_mg_per_l"],
@@ -122,7 +140,11 @@ def test_activity_from_tolerance_has_valid_range():
 
 @pytest.mark.parametrize(
     "tolerance, target",
-    [(-1, 120), (0, 0), (1500, 120)],
+    [
+        (-1, 120),
+        (0, 0),
+        (1500, 120),
+    ],
 )
 def test_activity_from_tolerance_rejects_invalid_or_unachievable_inputs(
     tolerance, target
@@ -163,13 +185,13 @@ def test_mass_balance_with_meals():
     )
 
     relative_error = abs(accounted_mg - expected_input_mg) / expected_input_mg
+
     assert relative_error < 0.01
 
 
 def test_invalid_activity_is_rejected():
     with pytest.raises(ValueError):
         simulate([], activity_pct=150)
-
 
 
 def test_sensitivity_analysis_returns_finite_results():
@@ -180,8 +202,6 @@ def test_sensitivity_analysis_returns_finite_results():
     assert results["peak_swing_umol_l"].notna().all()
     assert np.isfinite(results["peak_swing_umol_l"]).all()
     assert (results["peak_swing_umol_l"] >= 0).all()
-
-from database.planner import calculate_phe, calculate_meal_phe
 
 
 @pytest.fixture
@@ -231,3 +251,68 @@ def test_meal_flags_assumed_food(sample_food):
     ])
 
     assert result["contains_assumptions"] is True
+
+
+def test_calibration_includes_alternative_clearance():
+    params = load_params()
+
+    vmax = calibrate_vmax(
+        params["endogenous_input_mg_per_h"],
+        params["fasting_c0_mg_per_l"],
+        params["km_mg_per_l"],
+        params["k_alt_l_per_h"],
+    )
+
+    calculated = steady_state_conc(vmax, params)
+
+    assert calculated == pytest.approx(
+        params["fasting_c0_mg_per_l"],
+        rel=1e-8,
+    )
+
+
+def test_activity_from_tolerance_returns_valid_percentage():
+    result = activity_from_tolerance(
+        tolerance_mg_per_day=500,
+        c_target_umol=360,
+    )
+
+    assert 0 <= result <= 100
+
+
+def test_simulation_mass_balance():
+    p = load_params()
+    meals = [(8, 400), (13, 600)]
+    activity = 50
+    duration = 24
+
+    result = simulate(
+        meals=meals,
+        activity_pct=activity,
+        p=p,
+        t_end=duration,
+        dt=0.05,
+    )
+
+    volume = p["body_weight_kg"] * p["vd_l_per_kg"]
+
+    vmax = calibrate_vmax(
+        p["endogenous_input_mg_per_h"],
+        p["fasting_c0_mg_per_l"],
+        p["km_mg_per_l"],
+        p["k_alt_l_per_h"],
+    ) * activity / 100
+
+    initial_body = steady_state_conc(vmax, p) * volume
+    endogenous_input = p["endogenous_input_mg_per_h"] * duration
+    meal_input = sum(amount for _, amount in meals) * p["bioavailability"]
+
+    total_input = initial_body + endogenous_input + meal_input
+
+    total_accounted = (
+        result["gut_mg"].iloc[-1]
+        + result["conc_mg_l"].iloc[-1] * volume
+        + result["eliminated_mg"].iloc[-1]
+    )
+
+    assert abs(total_input - total_accounted) / total_input < 1e-5
