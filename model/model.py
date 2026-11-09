@@ -1,4 +1,3 @@
-
 """Educational one-compartment phenylalanine simulator for PheTwin India.
 
 This model is illustrative and is not validated for clinical decision-making.
@@ -14,9 +13,7 @@ import pandas as pd
 from scipy.integrate import solve_ivp
 
 
-# Molecular weight used for unit conversion: phenylalanine, g/mol.
-# Keep the conversion consistent throughout the project.
-PHE_MW = 165.19
+PHE_MW = 165.19  # Phenylalanine molecular weight, g/mol.
 
 REQUIRED_PARAMETERS = {
     "body_weight_kg",
@@ -34,7 +31,7 @@ REQUIRED_PARAMETERS = {
 
 
 def load_params(path=None):
-    """Load model parameter values from params.json."""
+    """Load parameter values from params.json."""
     raw = load_parameter_metadata(path)
     return {
         key: item["value"]
@@ -44,10 +41,9 @@ def load_params(path=None):
 
 
 def load_parameter_metadata(path=None):
-    """Load parameter values together with their provenance metadata."""
+    """Load parameter values together with provenance metadata."""
     if path is None:
         path = Path(__file__).parent / "params.json"
-
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
     validate_parameter_metadata(raw)
     return raw
@@ -55,6 +51,9 @@ def load_parameter_metadata(path=None):
 
 def validate_parameter_metadata(raw):
     """Validate parameter structure and physically meaningful demo ranges."""
+    if not isinstance(raw, dict):
+        raise ValueError("Parameter file must contain a JSON object.")
+
     parameters = {key for key in raw if not key.startswith("_")}
     missing = REQUIRED_PARAMETERS - parameters
     if missing:
@@ -105,21 +104,21 @@ def validate_parameter_metadata(raw):
         raise ValueError("Parameter 'bioavailability' must be between 0 and 1.")
 
     if raw["target_low_umol_l"]["value"] > raw["target_high_umol_l"]["value"]:
-        raise ValueError("Target low concentration cannot exceed target high concentration.")
+        raise ValueError(
+            "Target low concentration cannot exceed target high concentration."
+        )
 
 
 def unresolved_parameter_citations(path=None):
-    """Return non-private parameters with missing or placeholder citations."""
+    """Return parameters with missing or placeholder citations."""
     raw = load_parameter_metadata(path)
     unresolved = []
-
     for key, item in raw.items():
         if key.startswith("_"):
             continue
         citation = str(item.get("citation", "")).strip()
         if not citation or "TO_FILL" in citation.upper():
             unresolved.append(key)
-
     return unresolved
 
 
@@ -151,12 +150,9 @@ def mgl_to_mgdl(concentration_mg_l):
 def calibrate_vmax(
     endogenous_input, fasting_concentration, km, k_alt_l_per_h=0.0
 ):
-    """Calculate reference PAH capacity at the configured fasting state.
+    """Calibrate PAH capacity to the configured fasting steady state.
 
-    Calibration matches the full model's steady-state equation:
-    ``endogenous_input = Vmax*C/(Km+C) + k_alt*C``.
-    ``k_alt_l_per_h`` defaults to zero for compatibility with the simplified
-    equation, but callers using the full model must pass the configured value.
+    Uses: endogenous_input = Vmax*C/(Km+C) + k_alt*C.
     """
     if endogenous_input <= 0 or fasting_concentration <= 0 or km <= 0:
         raise ValueError("Input, fasting concentration, and Km must be positive.")
@@ -168,7 +164,6 @@ def calibrate_vmax(
         raise ValueError(
             "Alternative clearance exceeds endogenous input at the fasting target."
         )
-
     return residual_input * (km + fasting_concentration) / fasting_concentration
 
 
@@ -181,48 +176,61 @@ def steady_state_conc(vmax_eff, params):
     if endogenous < 0 or km <= 0 or k_alt < 0 or vmax_eff < 0:
         raise ValueError("Model rates must be non-negative and Km must be positive.")
 
-    # Solve:
-    # endogenous = Vmax_eff*C/(Km+C) + k_alt*C
     if k_alt == 0:
         if vmax_eff <= endogenous:
             return np.inf
         return endogenous * km / (vmax_eff - endogenous)
 
+    # Positive root of k_alt*C^2 + (Vmax + k_alt*Km - input)*C
+    # - input*Km = 0.
     a = k_alt
     b = vmax_eff + k_alt * km - endogenous
     c = -endogenous * km
-    discriminant = b**2 - 4 * a * c
-
+    discriminant = b**2 - 4.0 * a * c
     if discriminant < 0:
         raise ValueError("No real steady-state concentration for these parameters.")
-
-    return (-b + np.sqrt(discriminant)) / (2 * a)
+    return (-b + np.sqrt(discriminant)) / (2.0 * a)
 
 
 def simulate(meals, activity_pct, p=None, t_end=24.0, dt=0.05):
-    """Simulate blood Phe over time.
+    """Simulate blood Phe over time using an illustrative one-compartment model.
 
     Args:
-        meals: list of (time_h, phe_mg), e.g. [(8, 400), (13, 600)].
-        activity_pct: illustrative residual PAH activity, from 0 to 100.
-        p: optional dictionary of parameter values.
-        t_end: simulation duration in hours.
-        dt: output time step in hours.
+        meals: Iterable of (time_h, phe_mg) pairs.
+        activity_pct: Illustrative residual PAH activity, from 0 to 100.
+        p: Optional parameter dictionary; defaults to params.json values.
+        t_end: Simulation duration in hours.
+        dt: Regular output interval in hours.
 
     Returns:
-        DataFrame with time, concentrations, gut Phe, and cumulative
-        elimination. Meal Phe values are illustrative model inputs.
+        DataFrame with t_h, concentrations, gut_mg, and eliminated_mg.
     """
     p = p or load_params()
 
-    if not 0 <= activity_pct <= 100:
+    if not np.isfinite(activity_pct) or not 0 <= activity_pct <= 100:
         raise ValueError("activity_pct must be between 0 and 100.")
-    if t_end <= 0 or dt <= 0:
-        raise ValueError("t_end and dt must be positive.")
+    if (
+        not np.isfinite(t_end)
+        or not np.isfinite(dt)
+        or t_end <= 0
+        or dt <= 0
+    ):
+        raise ValueError("t_end and dt must be finite and positive.")
 
-    for time_h, phe_mg in meals:
-        if time_h < 0 or time_h > t_end or phe_mg < 0:
+    normalized_meals = []
+    for meal in meals:
+        if len(meal) != 2:
+            raise ValueError("Each meal must contain (time_h, phe_mg).")
+        time_h, phe_mg = float(meal[0]), float(meal[1])
+        if (
+            not np.isfinite(time_h)
+            or not np.isfinite(phe_mg)
+            or time_h < 0
+            or time_h > t_end
+            or phe_mg < 0
+        ):
             raise ValueError("Meals must have valid times and non-negative Phe.")
+        normalized_meals.append((time_h, phe_mg))
 
     volume_l = p["body_weight_kg"] * p["vd_l_per_kg"]
     if volume_l <= 0:
@@ -246,13 +254,11 @@ def simulate(meals, activity_pct, p=None, t_end=24.0, dt=0.05):
         raise ValueError("ka must be positive and bioavailability must be 0–1.")
 
     def rhs(_time, state):
-        gut_mg, body_mg, eliminated_mg = state
+        gut_mg, body_mg, _eliminated_mg = state
         concentration = max(body_mg, 0.0) / volume_l
-
         pah_elimination = vmax_eff * concentration / (km + concentration)
         alternative_elimination = k_alt * concentration
         elimination = pah_elimination + alternative_elimination
-
         return [
             -ka * gut_mg,
             ka * gut_mg + endogenous - elimination,
@@ -266,21 +272,28 @@ def simulate(meals, activity_pct, p=None, t_end=24.0, dt=0.05):
             "under these parameters."
         )
 
-    # State variables: gut Phe (mg), body-pool Phe (mg), eliminated Phe (mg).
-    state = [0.0, starting_concentration * volume_l, 0.0]
-    meal_events = sorted(meals, key=lambda meal: meal[0])
-
-    # Integrate between meal times so a meal enters the gut at its scheduled time.
-    event_times = sorted(set([0.0, t_end] + [t for t, _ in meal_events]))
-    output_rows = []
+    # State variables: gut Phe (mg), body-pool Phe (mg), cumulative eliminated Phe (mg).
+    state = np.array([0.0, starting_concentration * volume_l, 0.0], dtype=float)
 
     meals_by_time = {}
-    for time_h, phe_mg in meal_events:
+    for time_h, phe_mg in normalized_meals:
         meals_by_time[time_h] = meals_by_time.get(time_h, 0.0) + phe_mg
 
+    event_times = sorted(set([0.0, float(t_end), *meals_by_time.keys()]))
+
+    # Round the regular grid to suppress floating-point near-duplicate timestamps.
+    regular_times = np.round(np.arange(0.0, t_end, dt), 10)
+    output_grid = sorted(
+        set([0.0, float(t_end), *regular_times.tolist(), *event_times])
+    )
+
+    output_rows = []
     for index, start in enumerate(event_times):
+        # Apply any meal at this time before recording the timestamp.
         if start in meals_by_time:
             state[0] += bioavailability * meals_by_time[start]
+
+        output_rows.append((start, state.copy()))
 
         if index == len(event_times) - 1:
             break
@@ -289,34 +302,34 @@ def simulate(meals, activity_pct, p=None, t_end=24.0, dt=0.05):
         if end <= start:
             continue
 
-        sample_times = np.arange(start, end, dt)
-        sample_times = np.append(sample_times, end)
+        interior_times = [t for t in output_grid if start < t < end]
+        t_eval = np.asarray(interior_times + [end], dtype=float)
 
         solution = solve_ivp(
             rhs,
             (start, end),
             state,
-            t_eval=sample_times,
+            t_eval=t_eval,
             method="LSODA",
             rtol=1e-8,
             atol=1e-8,
         )
-
         if not solution.success:
             raise RuntimeError(f"Simulation failed: {solution.message}")
 
-        segment = solution.y.T
-        if output_rows:
-            segment = segment[1:]  # Avoid duplicate boundary time points.
-        output_rows.extend(
-            (time_h, row.copy())
-            for time_h, row in zip(solution.t, segment)
-        )
-        state = solution.y[:, -1].tolist()
+        # Do not append the interval endpoint here. The next event-loop pass
+        # appends it exactly once, after applying any meal scheduled then.
+        for time_h, state_row in zip(solution.t[:-1], solution.y.T[:-1]):
+            output_rows.append((float(time_h), state_row.copy()))
 
-    times = np.array([row[0] for row in output_rows])
-    states = np.array([row[1] for row in output_rows])
+        state = solution.y[:, -1].copy()
 
+    output_rows.sort(key=lambda item: item[0])
+    times = np.asarray([item[0] for item in output_rows], dtype=float)
+    if len(times) == 0 or np.any(np.diff(times) <= 0):
+        raise RuntimeError("Simulation output times are not strictly increasing.")
+
+    states = np.vstack([item[1] for item in output_rows])
     concentrations = states[:, 1] / volume_l
 
     return pd.DataFrame(
@@ -332,13 +345,11 @@ def simulate(meals, activity_pct, p=None, t_end=24.0, dt=0.05):
 
 
 def activity_from_tolerance(tolerance_mg_per_day, c_target_umol, p=None):
-    """Estimate model residual activity from a proposed Phe tolerance.
+    """Estimate model residual activity from proposed tolerance inputs.
 
-    Calibration helper only. It requires literature-supported tolerance
-    and target inputs before scientific interpretation.
+    Calibration helper only. This is not a clinical recommendation.
     """
     p = p or load_params()
-
     if tolerance_mg_per_day < 0 or c_target_umol <= 0:
         raise ValueError("Tolerance must be non-negative and target must be positive.")
 
@@ -347,7 +358,6 @@ def activity_from_tolerance(tolerance_mg_per_day, c_target_umol, p=None):
         p["endogenous_input_mg_per_h"]
         + p["bioavailability"] * tolerance_mg_per_day / 24.0
     )
-
     vmax_eff = (
         inflow - p["k_alt_l_per_h"] * concentration
     ) * (p["km_mg_per_l"] + concentration) / concentration
@@ -358,11 +368,12 @@ def activity_from_tolerance(tolerance_mg_per_day, c_target_umol, p=None):
         p["km_mg_per_l"],
         p["k_alt_l_per_h"],
     )
+    if vmax_normal <= 0:
+        raise ValueError("Normal PAH capacity must be positive.")
 
     activity_pct = 100.0 * vmax_eff / vmax_normal
     if not 0 <= activity_pct <= 100:
         raise ValueError(
             "Tolerance implies residual activity outside the model's 0–100% range."
         )
-
     return activity_pct
