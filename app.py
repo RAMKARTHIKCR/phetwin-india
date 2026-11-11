@@ -390,6 +390,7 @@ from model.model import (
     target_range_metadata,
     unresolved_parameter_citations,
 )
+from model.sensitivity import run_sensitivity
 import plotly.express as px
 
 st.write(
@@ -573,3 +574,102 @@ if run_simulation:
 
         except Exception as exc:
             st.error(f"Simulation could not be completed: {exc}")
+
+
+# ---------------------------------------------------------
+# Sensitivity analysis — illustrative model exploration
+# ---------------------------------------------------------
+st.divider()
+st.header("4. Sensitivity Analysis")
+st.warning(
+    "**Illustrative sensitivity analysis only.** This analysis varies one "
+    "model parameter at a time and measures the change in the simulated "
+    "peak concentration. It is not clinical evidence, does not identify "
+    "patient-specific effects, and must not guide treatment or dietary decisions."
+)
+st.write(
+    "Each parameter is varied independently by ±20% while the other model "
+    "settings and illustrative meal inputs remain fixed. Results are ranked "
+    "by the absolute difference between the two simulated peak concentrations."
+)
+
+with st.expander("Sensitivity-analysis method", expanded=False):
+    st.markdown(
+        """
+        - Method: one-at-a-time parameter sensitivity analysis.
+        - Variation: −20% and +20% from each baseline parameter value.
+        - Outcome: maximum simulated concentration (µmol/L).
+        - Fixed illustrative meal inputs: 400 mg at 8 h, 600 mg at 13 h,
+          and 500 mg at 20 h.
+        - Fixed illustrative residual PAH activity: 10%.
+        - Parameters are varied independently; interactions between parameters
+          are not assessed.
+        """
+    )
+
+if st.button("Run sensitivity analysis", type="primary", key="run_sensitivity"):
+    try:
+        with st.spinner("Running illustrative parameter comparisons..."):
+            baseline_peak, sensitivity_table = run_sensitivity(change=0.20)
+
+        st.metric(
+            "Baseline peak concentration",
+            f"{baseline_peak:.2f} µmol/L",
+        )
+
+        display_sensitivity = sensitivity_table.copy()
+        parameter_labels = {
+            "km_mg_per_l": "PAH Km (mg/L)",
+            "vd_l_per_kg": "Distribution volume (L/kg)",
+            "endogenous_input_mg_per_h": "Endogenous input (mg/h)",
+            "k_alt_l_per_h": "Alternative clearance (L/h)",
+            "ka_per_h": "Gut absorption rate (1/h)",
+            "bioavailability": "Bioavailability (fraction)",
+        }
+        display_sensitivity["parameter"] = display_sensitivity["parameter"].map(
+            lambda name: parameter_labels.get(name, name)
+        )
+        display_sensitivity = display_sensitivity.rename(
+            columns={
+                "parameter": "Parameter",
+                "baseline_value": "Baseline value",
+                "peak_minus_20_pct_umol_l": "Peak at −20% (µmol/L)",
+                "peak_plus_20_pct_umol_l": "Peak at +20% (µmol/L)",
+                "peak_swing_umol_l": "Peak swing (µmol/L)",
+            }
+        )
+
+        st.subheader("Parameter sensitivity ranking")
+        sensitivity_chart = px.bar(
+            display_sensitivity,
+            x="Peak swing (µmol/L)",
+            y="Parameter",
+            orientation="h",
+            labels={"Peak swing (µmol/L)": "Difference between −20% and +20% peaks (µmol/L)"},
+            title="Illustrative effect on peak simulated concentration",
+        )
+        sensitivity_chart.update_layout(yaxis={"categoryorder": "total ascending"})
+        st.plotly_chart(sensitivity_chart, use_container_width=True)
+
+        st.subheader("Sensitivity results")
+        st.dataframe(
+            display_sensitivity.round(3),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        st.download_button(
+            "Download sensitivity results (CSV)",
+            data=sensitivity_table.to_csv(index=False).encode("utf-8"),
+            file_name="phetwin_illustrative_sensitivity.csv",
+            mime="text/csv",
+            key="download_sensitivity",
+        )
+
+        st.caption(
+            "Interpretation: a larger peak swing indicates greater sensitivity "
+            "within this specific illustrative model setup. It does not imply "
+            "clinical importance or real-world biological influence."
+        )
+    except Exception as exc:
+        st.error(f"Sensitivity analysis could not be completed: {exc}")
