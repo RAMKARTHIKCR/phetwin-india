@@ -4,3 +4,11 @@ __pycache__/
 .pytest_cache/
 .streamlit/secrets.toml
 data/phetwin.db
+
+# Local backup files
+app_backup_before_sensitivity.py
+app_with_sensitivity.py
+model_fixed.py
+model/model_backup.py
+model/model_backup_before_final.py
+data/foods_expansion_staging_backup.csv
